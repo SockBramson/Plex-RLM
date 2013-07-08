@@ -31,12 +31,13 @@ def Mainmenu():
 def Plinkett(title):
     oc = ObjectContainer(title2=title)
 
-	#Log('figure out the show stuff. any RSS feeds?')
-    #html = HTML.ElementFromURL(PLINKETT)
+
     for video in HTML.ElementFromURL(PLINKETT).xpath('//*[@id="post-main-37"]/div/p'):
         url = video.xpath('./a')[0].get('href') #Do I need to (PLINKETT + url) some place?
         if url[0:4] != 'http': url = PLINKETT + url # Some URLs have http and some don't. Add it to those that don't.
 	thumb = video.xpath('./a/img')[0].get('src')
+	Log(url)
+
 
 	oc.add(VideoClipObject(
 		url = url,
@@ -50,12 +51,12 @@ def Plinkett(title):
 def HalfBag(title):
     oc = ObjectContainer(title2=title)
 
-	#Log('some more figuring')
-    #html = HTML.ElementFromUrl(HITB)
+
     for video in HTML.ElementFromURL(HITB).xpath('//*[@id="post-main-515"]/div/p'):
 	url = video.xpath('./a')[0].get('href') #Pages are broken into 2013, 2012, 2011. How do I make a single list?
 	thumb = video.xpath('./a/img')[0].get('src')
-		
+	Log(url)
+	
 	oc.add(VideoClipObject(
 		url = url,
 		thumb = thumb))
