@@ -67,8 +67,18 @@ def HalfBag(title):
 @route('/video/redlettermedia/bestworst')
 def BestWorst(title):
     oc = ObjectContainer(title2=title)
-    Log('Some more figuring')
-
+    
+    for video in HTML.ElementFromURL(BOW).xpath('//*[@id="post-main-3857"]/div/p/a/@href'):
+    	Log(video)
+    	url = video.xpath('./@href')[0]
+    	thumb = video.xpath('./img')[0]
+    	Log(url)
+    	Log(thumb)
+    	
+    	oc.add(VideoClipObject(
+    		url = url,
+    		thumb = thumb))
+    		
     return oc
 
 ###################################################################################################
