@@ -5,9 +5,10 @@ NS = {'blip':'http://blip.tv/dtd/blip/1.0',
             'media':'http://search.yahoo.com/mrss/'}
 
 RSS_FEED = 'http://redlettermedia.blip.tv/rss'
-PLINKETT = 'http://redlettermedia.com/plinkett'
-BOW = 'http://redlettermedia.com/best-of-the-worst'
-HITB = 'http://redlettermedia.com/half-in-the-bag'
+PLINKETT = 'http://www.redlettermedia.com/plinkett/'
+BOW = 'http://redlettermedia.com/best-of-the-worst/'
+HITB = 'http://redlettermedia.com/half-in-the-bag/%s'
+HITBMORE = '2011-episodes', '2012-episodes', '2013-episodes'
 
 ###################################################################################################
 
@@ -29,15 +30,24 @@ def Mainmenu():
 ###################################################################################################
 @route('/video/redlettermedia/plinkett')
 def Plinkett(title):
-    oc = ObjectContainer(title2=title)
+    oc = ObjectContainer(title2=title) #, user_agent = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.4) Gecko/2008102920 Firefox/3.0.4')
 
-
-    for video in HTML.ElementFromURL(PLINKETT).xpath('//*[@id="post-main-37"]/div/p'):
-        url = video.xpath('./a')[0].get('href') #Do I need to (PLINKETT + url) some place?
-        if url[0:4] != 'http': url = PLINKETT + url # Some URLs have http and some don't. Add it to those that don't.
-	thumb = video.xpath('./a/img')[0].get('src')
+# First we find the list of videos.
+    for link in HTML.ElementFromURL(PLINKETT).xpath('//*[@id="post-main-37"]/div/p/a/@href'):
+# Some links don't start with the base URL, so we have to add it to them.
+        Log('link is')
+	Log(link)
+	url = link#.xpath('/@href')[0]
+        if link[0:4] != 'http': url = PLINKETT + link
+        Log('URL is')
 	Log(url)
-
+# Now we need to go to each URL for the actual video links.
+        video = HTML.ElementFromURL(url).xpath('//embed')[0].get('src')
+        Log('video is')
+	Log(video)
+        thumb = HTML.ElementFromURL(PLINKETT).xpath('./a/img')#.get('src')
+        Log(thumb)
+	Log(url)
 
 	oc.add(VideoClipObject(
 		url = url,
@@ -51,11 +61,13 @@ def Plinkett(title):
 def HalfBag(title):
     oc = ObjectContainer(title2=title)
 
-
-    for video in HTML.ElementFromURL(HITB).xpath('//*[@id="post-main-515"]/div/p'):
-	url = video.xpath('./a')[0].get('href') #Pages are broken into 2013, 2012, 2011. How do I make a single list?
-	thumb = video.xpath('./a/img')[0].get('src')
-	Log(url)
+# Pages are split up by year. Get list of videos from each page.
+    for page in HITBMORE:
+        page = HITB % (page)
+        for video in HTML.ElementFromURL(page).xpath('//*[@id="post-main-515"]/div/p'):
+               url = video.xpath('./a')[0].get('href')
+               thumb = video.xpath('./a/img')[0].get('src')
+               Log(url)
 	
 	oc.add(VideoClipObject(
 		url = url,
@@ -67,18 +79,18 @@ def HalfBag(title):
 @route('/video/redlettermedia/bestworst')
 def BestWorst(title):
     oc = ObjectContainer(title2=title)
-    
+
     for video in HTML.ElementFromURL(BOW).xpath('//*[@id="post-main-3857"]/div/p/a/@href'):
-    	Log(video)
-    	url = video.xpath('./@href')[0]
-    	thumb = video.xpath('./img')[0]
-    	Log(url)
-    	Log(thumb)
-    	
-    	oc.add(VideoClipObject(
-    		url = url,
-    		thumb = thumb))
-    		
+       	Log(video)
+       	url = video
+       	thumb = video #.xpath('./@src')[0]
+       	Log(url)
+       	Log(thumb)
+
+       	oc.add(VideoClipObject(
+               	url = url,
+               	thumb = thumb))
+
     return oc
 
 ###################################################################################################
@@ -87,8 +99,10 @@ def AllShows(title):
     oc = ObjectContainer(title2=title)
 
     for video in XML.ElementFromURL(RSS_FEED).xpath('//item'):
-        url = video.xpath('./link')[0].text
-        title = video.xpath('./title')[0].text
+        Log(video)
+	url = video.xpath('./link')[0].text
+        Log(url)
+	title = video.xpath('./title')[0].text
         date = video.xpath('./pubDate')[0].text
         date = Datetime.ParseDate(date)
         summary = video.xpath('./blip:puredescription', namespaces=NS)[0].text
