@@ -41,7 +41,7 @@ def Plinkett(title):
         if link[0:4] != 'http': url = PLINKETT + link
         Log('URL is')
 	Log(url)
-# Now we need to go to each URL for the actual video links.
+# Now we need to go to each URL for the actual video links. Turns out that some videos are in embed tags, others in iframe tags, some from youtube and some from blip.
         video = HTML.ElementFromURL(url).xpath('//embed')[0].get('src')
         Log('video is')
 	Log(video)
