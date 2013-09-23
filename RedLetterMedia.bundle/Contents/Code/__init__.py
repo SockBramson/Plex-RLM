@@ -10,7 +10,7 @@ BOW = 'http://redlettermedia.com/best-of-the-worst/'
 HITB = 'http://redlettermedia.com/half-in-the-bag/%s'
 HITBMORE = '2011-episodes', '2012-episodes', '2013-episodes'
 
-MAX_EPISODES_PER_PAGE = 20
+MAX_EPISODES_PER_PAGE = 10
 
 ###################################################################################################
 
@@ -86,7 +86,7 @@ def BestWorst(title):
        	Log(video)
        	url = video
        	thumb = video #.xpath('./@src')[0]
-       	Log(url)
+       	Log('URL is %s' %url)
        	Log(thumb)
 
        	oc.add(VideoClipObject(
@@ -108,7 +108,7 @@ def AllShows(title, offset = 0):
 	  continue
         Log('Video is %s' %video)
 	url = video.xpath('./link')[0].text
-        Log(url)
+        Log('URL is %s' %url)
 	title = video.xpath('./title')[0].text
         date = video.xpath('./pubDate')[0].text
         date = Datetime.ParseDate(date)
@@ -126,8 +126,10 @@ def AllShows(title, offset = 0):
               duration = duration,
               originally_available_at = date))
 	
-	if len(oc) >= MAX_EPISODES_PER_PAGE:
-	    oc.add(NextPageObject(key = Callback(allshows, title, offset = counter) title = "Next..."))
-	    return oc
-	
+        if len(oc) >= MAX_EPISODES_PER_PAGE:
+            oc.add(NextPageObject(key = Callback(AllShows, title, offset = counter), title = 'Next'))
+        #if len(oc) == 0:
+	    #return ObjectContainer(header='No Results', message='No results were found')    
+            return oc
+    
     return oc
