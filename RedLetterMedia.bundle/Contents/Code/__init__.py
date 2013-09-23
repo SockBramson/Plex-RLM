@@ -10,6 +10,8 @@ BOW = 'http://redlettermedia.com/best-of-the-worst/'
 HITB = 'http://redlettermedia.com/half-in-the-bag/%s'
 HITBMORE = '2011-episodes', '2012-episodes', '2013-episodes'
 
+MAX_EPISODES_PER_PAGE = 20
+
 ###################################################################################################
 
 # Set up containers for all possible objects
@@ -21,10 +23,10 @@ def Start():
 @handler('/video/redlettermedia', TITLE, art=ART, thumb=ICON)
 def Mainmenu():
     oc = ObjectContainer()
-    oc.add(DirectoryObject(key=Callback(Plinkett, title="Mr. Plinkett"), title="Mr. Plinkett"))
-    oc.add(DirectoryObject(key=Callback(HalfBag, title="Half in the Bag"), title="Half in the Bag"))
-    oc.add(DirectoryObject(key=Callback(BestWorst, title="Best of the Worst"), title="Best of the Worst"))
-    oc.add(DirectoryObject(key=Callback(AllShows, title="All Shows"), title="All Shows"))
+    oc.add(DirectoryObject(key=Callback(Plinkett, title="Mr. Plinkett"), title="Mr. Plinkett", thumb = R(ICON)))
+    oc.add(DirectoryObject(key=Callback(HalfBag, title="Half in the Bag"), title="Half in the Bag", thumb = R(ICON)))
+    oc.add(DirectoryObject(key=Callback(BestWorst, title="Best of the Worst"), title="Best of the Worst", thumb = R(ICON)))
+    oc.add(DirectoryObject(key=Callback(AllShows, title="All Shows"), title="All Shows", thumb = R(ICON)))
     return oc
 
 ###################################################################################################
@@ -35,24 +37,19 @@ def Plinkett(title):
 # First we find the list of videos.
     for link in HTML.ElementFromURL(PLINKETT).xpath('//*[@id="post-main-37"]/div/p/a/@href'):
 # Some links don't start with the base URL, so we have to add it to them.
-        Log('link is')
-	Log(link)
-	url = link#.xpath('/@href')[0]
-        if link[0:4] != 'http': url = PLINKETT + link
-        Log('URL is')
-	Log(url)
+        Log('link is %s' %link)
+	if link[0:4] != 'http': link = PLINKETT + link
+        Log('Full link is %s' %link)
 # Now we need to go to each URL for the actual video links. Turns out that some videos are in embed tags, others in iframe tags, some from youtube and some from blip.
         try:
-		video = HTML.ElementFromURL(url).xpath('//embed')[0].get('src')
+		video = HTML.ElementFromURL(link).xpath('//embed')[0].get('src')
         	if video.startswith('http://a.'):
 			video = 'http://blip.tv/play/%s.html' % (video[25:36])
 	except IndexError:
 		Log('Index error here.')
-	Log('video is')
-	Log(video)
+	Log('video is %s' %video)
         thumb = HTML.ElementFromURL(PLINKETT).xpath('./a/img')#.get('src')
-        Log('Thumbnail link')
-	Log(thumb)
+        Log('Thumbnail link %s' %thumb)
 
 	oc.add(VideoClipObject(
 		url = video,
@@ -72,7 +69,7 @@ def HalfBag(title):
         for video in HTML.ElementFromURL(page).xpath('//*[@id="post-main-515"]/div/p'):
                url = video.xpath('./a')[0].get('href')
                thumb = video.xpath('./a/img')[0].get('src')
-               Log(url)
+               Log('URL is %s' %url)
 	
 	oc.add(VideoClipObject(
 		url = url,
@@ -99,12 +96,17 @@ def BestWorst(title):
     return oc
 
 ###################################################################################################
-@route('/video/redlettermedia/allshows')
-def AllShows(title):
-    oc = ObjectContainer(title2=title)
+@route('/video/redlettermedia/allshows', offset = int)
+def AllShows(title, offset = 0):
+    oc = ObjectContainer(title2 = title)
+    
+    counter = 0
 
     for video in XML.ElementFromURL(RSS_FEED).xpath('//item'):
-        Log(video)
+        counter = counter + 1
+        if counter <= offset:
+	  continue
+        Log('Video is %s' %video)
 	url = video.xpath('./link')[0].text
         Log(url)
 	title = video.xpath('./title')[0].text
@@ -120,8 +122,12 @@ def AllShows(title):
               url = url,
               title = title,
               summary = summary,
-              #thumb = Callback(Thumb, url=thumb),
+              thumb = thumb,
               duration = duration,
               originally_available_at = date))
-
+	
+	if len(oc) >= MAX_EPISODES_PER_PAGE:
+	    oc.add(NextPageObject(key = Callback(allshows, title, offset = counter) title = "Next..."))
+	    return oc
+	
     return oc
