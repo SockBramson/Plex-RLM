@@ -30,17 +30,22 @@ def Mainmenu():
     return oc
 
 ###################################################################################################
-@route('/video/redlettermedia/plinkett')
-def Plinkett(title):
+@route('/video/redlettermedia/plinkett', offset = int)
+def Plinkett(title, offset = 0):
     oc = ObjectContainer(title2=title) #, user_agent = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.4) Gecko/2008102920 Firefox/3.0.4')
 
-# First we find the list of videos.
+    counter = 0
+
+    # First we find the list of videos.
     for link in HTML.ElementFromURL(PLINKETT).xpath('//*[@id="post-main-37"]/div/p/a/@href'):
-# Some links don't start with the base URL, so we have to add it to them.
-        Log('link is %s' %link)
+	# Some links don't start with the base URL, so we have to add it to them.
+        counter = counter + 1
+        if counter <= offset:
+          continue
+	# Log('link is %s' %link)
 	if link[0:4] != 'http': link = PLINKETT + link
         Log('Full link is %s' %link)
-# Now we need to go to each URL for the actual video links. Turns out that some videos are in embed tags, others in iframe tags, some from youtube and some from blip.
+	# Now we need to go to each URL for the actual video links. Turns out that some videos are in embed tags, others in iframe tags, some from youtube and some from blip.
         try:
 		video = HTML.ElementFromURL(link).xpath('//embed')[0].get('src')
         	if video.startswith('http://a.'):
@@ -48,12 +53,20 @@ def Plinkett(title):
 	except IndexError:
 		Log('Index error here.')
 	Log('video is %s' %video)
-        thumb = HTML.ElementFromURL(PLINKETT).xpath('./a/img')#.get('src')
-        Log('Thumbnail link %s' %thumb)
+        thumb = HTML.ElementFromURL(PLINKETT).xpath('./a/img')#[0].get('src')
+        #if len(thumb) is not 0:
+        #    Log('Thumbnail link %s' %thumb)
+        #else:
+        #    Log('No thumbnail found')
+        #    thumb = R(ICON)
 
 	oc.add(VideoClipObject(
 		url = video,
 		thumb = thumb))
+
+        if len(oc) >= MAX_EPISODES_PER_PAGE:
+            oc.add(NextPageObject(key = Callback(Plinkett, title = 'Mr. Plinkett', offset = counter), title = 'Next'))
+            return oc
 
     return oc
 
@@ -127,7 +140,7 @@ def AllShows(title, offset = 0):
               originally_available_at = date))
 	
         if len(oc) >= MAX_EPISODES_PER_PAGE:
-            oc.add(NextPageObject(key = Callback(AllShows, title, offset = counter), title = 'Next'))
+            oc.add(NextPageObject(key = Callback(AllShows, title = 'All Shows', offset = counter), title = 'Next'))
         #if len(oc) == 0:
 	    #return ObjectContainer(header='No Results', message='No results were found')    
             return oc
