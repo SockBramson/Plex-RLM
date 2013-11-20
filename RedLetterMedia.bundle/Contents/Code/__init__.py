@@ -9,7 +9,7 @@ RSS_FEED = 'http://redlettermedia.blip.tv/rss'
 PLINKETT = 'http://www.redlettermedia.com/plinkett/'
 PLINKETTCATS = 'star-trek', 'star-wars', 'other-movies', 'commentary-tracks', 'plinkett-review-trailers', 'plinkett-review-extras', 'mr-plinkett-the-animated-series'
 BOW = 'http://redlettermedia.com/best-of-the-worst/'
-HITB = 'http://redlettermedia.com/half-in-the-bag/%s'
+HITB = 'http://redlettermedia.com/half-in-the-bag/'
 HITBMORE = '2011-episodes', '2012-episodes', '2013-episodes'
 
 MAX_EPISODES_PER_PAGE = 10
@@ -26,7 +26,7 @@ def Start():
 def Mainmenu():
     oc = ObjectContainer()
     oc.add(DirectoryObject(key=Callback(PlinkMenu, title="Mr. Plinkett"), title="Mr. Plinkett", thumb = R(ICON)))
-    oc.add(DirectoryObject(key=Callback(HalfBag, title="Half in the Bag"), title="Half in the Bag", thumb = R(ICON)))
+    oc.add(DirectoryObject(key=Callback(HITBMenu, title="Half in the Bag"), title="Half in the Bag", thumb = R(ICON)))
     oc.add(DirectoryObject(key=Callback(BestWorst, title="Best of the Worst"), title="Best of the Worst", thumb = R(ICON)))
     oc.add(DirectoryObject(key=Callback(AllShows, title="All Shows"), title="All Shows", thumb = R(ICON)))
     return oc
@@ -43,6 +43,15 @@ def PlinkMenu(title):
 	#oc.add(DirectoryObject(key=Callback(Trailers, title='Trailers', sort_type='Trailers'), title='Trailers', thumb = R(ICON)))
 	#oc.add(DirectoryObject(key=Callback(Extras, title='Extras', sort_type='extras'), title='Extras', thumb = R(ICON)))
 	return oc
+###################################################################################################
+# Submenu for Half in the Bag
+@route(PREFIX + '/hitb/hitbmenu')
+def HITBMenu(title):
+        oc = ObjectContainer(title2=title)
+        oc.add(DirectoryObject(key=Callback(Thirteen, title='2013 Episodes'), title='2013 Episodes', thumb = R(ICON)))
+        oc.add(DirectoryObject(key=Callback(Twelve, title='2012 Episodes'), title='2012 Episodes', thumb = R(ICON)))
+        oc.add(DirectoryObject(key=Callback(Eleven, title='2011 Episodes'), title='2011 Episodes', thumb = R(ICON)))
+        return oc
 
 ###################################################################################################
 @route(PREFIX + '/plinkett')
@@ -86,7 +95,7 @@ def StarTrek(title):
 	    	except IndexError:
 			Log('End of list.')	
 		Log('Video is %s' %url)
-	    	oc.add(VideoClipObject(url = url, thumb = thumb))
+	    	oc.add(VideoClipObject(url = url, thumb = thumb, title = title))
 	return oc
 ###################################################################################################
 # Star Wars Section of Plinkett reviews.
@@ -121,19 +130,29 @@ def StarWars(title):
 @route(PREFIX + '/othermovies')
 def OtherMovies(title):
 	oc = ObjectContainer(title2=title)
-	# Get list of videos.
-	for link in HTML.ElementFromURL(PLINKETT + 'other-movies').xpath('//*[@class="post clearfix"]/div/p/a'):
-		Log('Link is %s' %link)
-	    # Some links need the base URL added.
-	    	if link[0:4] != 'http': 
-	    		link = PLINKETT + link
-            	Log('Full link is %s' %link)
-	    	url = HTML.ElementFromURL(link).xpath('//embed')[0].get('src')
-	    	Log('Video is %s' %video)
-	    	thumb = HTML.ElementFromURL(PLINKETT + 'other-movies').xpath('//*[@class="post clearfix"]/div/p/a/img')
-	    	Log('Thumbnail is %s' %thumb)
-	    	oc.add(VideoClipObject(url = url, thumb = thumb))
-	return oc	
+
+        thumblist = HTML.ElementFromURL(PLINKETT + 'other-movies').xpath('//*[@class="post clearfix"]/div/p/a/img/@src')
+        nextthumb = 0
+
+        # Get list of videos.
+        for link in HTML.ElementFromURL(PLINKETT + 'other-movies').xpath('//*[@class="post clearfix"]/div/p/a/@href'):
+                Log('Link is %s' %link)
+                thumb = thumblist[nextthumb]
+                nextthumb = nextthumb + 1
+                Log('Thumbnail is %s' %thumb)
+                # Some links need the base URL added.
+                if link[0:4] != 'http':
+                        link = PLINKETT + link
+                Log('Full link is %s' %link)
+                try:
+                        url = HTML.ElementFromURL(link).xpath('//embed')[0].get('src')
+                        if url.startswith('http://a.'):
+                                url = 'http://blip.tv/play/%s.html' % (url[25:36])
+                except IndexError:
+                        Log('End of list.')
+                Log('Video is %s' %url)
+                oc.add(VideoClipObject(url = url, thumb = thumb))
+        return oc
 ###################################################################################################
 # @route('/video/redlettermedia/plinkett', offset = int)
 # def Plinkett(title, offset = 0):
@@ -177,61 +196,143 @@ def OtherMovies(title):
 
 
 ###################################################################################################
-@route('/video/redlettermedia/halfbag', offset = int)
-def HalfBag(title, offset = 0):
-    oc = ObjectContainer(title2=title)
+@route(PREFIX + '/thirteen', offset = int)
+def Thirteen(title, offset = 0):
+	oc = ObjectContainer(title2=title)
 
-    counter = 0
-	
-	# Pages are split up by year. Get list of videos from each page.
-    for link in HITBMORE:
-        link = HITB % (page)
-        for video in HTML.ElementFromURL(link).xpath('//*[@class="post clearfix"]/div/p/a'):
-               counter = counter + 1
-               if counter <= offset:
-	               continue			   
-               url = video.xpath('//embed')
-               thumb = video.xpath('./a/img')[0].get('src')
-               Log('URL is %s' %url)
-	
-	oc.add(VideoClipObject(
-		url = url,
-		thumb = thumb))
-		
-	if len(oc) >= MAX_EPISODES_PER_PAGE:
-        	oc.add(NextPageObject(key = Callback(AllShows, title = 'Half in the Bag', offset = counter), title = 'Next')) 
-        	return oc
+        counter = 0
+        thumblist = HTML.ElementFromURL(HITB + '2013-episodes').xpath('//*[@class="post clearfix"]/div/p/a/img/@src')
+        nextthumb = 0
 
-    return oc
-
+        # Get list of videos.
+        for link in HTML.ElementFromURL(HITB + '2013-episodes').xpath('//*[@class="post clearfix"]/div/p/a/@href'):
+                counter = counter + 1
+                if counter <= offset:
+                        continue
+                Log('Link is %s' %link)
+                thumb = thumblist[nextthumb]
+                nextthumb = nextthumb + 1
+                Log('Thumbnail is %s' %thumb)
+                # Some links need the base URL added.
+                if link[0:4] != 'http':
+                        link = HITB + link
+                Log('Full link is %s' %link)
+                try:
+                        url = HTML.ElementFromURL(link).xpath('//embed')[0].get('src')
+                        if url.startswith('http://a.'):
+                                url = 'http://blip.tv/play/%s.html' % (url[25:36])
+                except IndexError:
+                        Log('End of list.')
+                Log('Video is %s' %url)
+                oc.add(VideoClipObject(url = url, thumb = thumb, title = title))
+                if len(oc) >= MAX_EPISODES_PER_PAGE:
+                        oc.add(NextPageObject(key = Callback(Thirteen, title = '2013 Episodes', offset = counter), title = 'Next'))
+                        return oc
+        return oc
 ###################################################################################################
-@route('/video/redlettermedia/bestworst', offset = int)
+@route(PREFIX + '/twelve', offset = int)
+def Twelve(title, offset = 0):
+        oc = ObjectContainer(title2=title)
+
+        counter = 0
+        thumblist = HTML.ElementFromURL(HITB + '2012-episodes').xpath('//*[@class="post clearfix"]/div/p/a/img/@src')
+        nextthumb = 0
+    
+        # Get list of videos.
+        for link in HTML.ElementFromURL(HITB + '2012-episodes').xpath('//*[@class="post clearfix"]/div/p/a/@href'):
+                counter = counter + 1
+                if counter <= offset:
+                        continue
+                Log('Link is %s' %link)
+                thumb = thumblist[nextthumb]
+                nextthumb = nextthumb + 1
+                Log('Thumbnail is %s' %thumb)
+                # Some links need the base URL added.
+                if link[0:4] != 'http':
+                        link = HITB + link
+                Log('Full link is %s' %link)
+                try:
+                        url = HTML.ElementFromURL(link).xpath('//embed')[0].get('src')
+                        if url.startswith('http://a.'):
+                                url = 'http://blip.tv/play/%s.html' % (url[25:36])
+                except IndexError:
+                        Log('End of list.')
+                Log('Video is %s' %url)
+                oc.add(VideoClipObject(url = url, thumb = thumb, title = title))
+                if len(oc) >= MAX_EPISODES_PER_PAGE:
+                        oc.add(NextPageObject(key = Callback(Twelve, title = '2012 Episodes', offset = counter), title = 'Next'))
+                        return oc
+        return oc
+###################################################################################################
+@route(PREFIX + '/eleven', offset = int)
+def Eleven(title, offset = 0):
+        oc = ObjectContainer(title2=title)
+
+        counter = 0
+        thumblist = HTML.ElementFromURL(HITB + '2011-episodes').xpath('//*[@class="post clearfix"]/div/p/a/img/@src')
+        nextthumb = 0
+    
+        # Get list of videos.
+        for link in HTML.ElementFromURL(HITB + '2011-episodes').xpath('//*[@class="post clearfix"]/div/p/a/@href'):
+                counter = counter + 1
+                if counter <= offset:
+                        continue
+                Log('Link is %s' %link)
+                thumb = thumblist[nextthumb]
+                nextthumb = nextthumb + 1
+                Log('Thumbnail is %s' %thumb)
+                # Some links need the base URL added.
+                if link[0:4] != 'http':
+                        link = HITB + link
+                Log('Full link is %s' %link)
+                try:
+                        url = HTML.ElementFromURL(link).xpath('//embed')[0].get('src')
+                        if url.startswith('http://a.'):
+                                url = 'http://blip.tv/play/%s.html' % (url[25:36])
+                except IndexError:
+                        Log('End of list.')
+                Log('Video is %s' %url)
+                oc.add(VideoClipObject(url = url, thumb = thumb, title = title))
+                if len(oc) >= MAX_EPISODES_PER_PAGE:
+                        oc.add(NextPageObject(key = Callback(Eleven, title = '2011 Episodes', offset = counter), title = 'Next'))
+                        return oc
+        return oc
+###################################################################################################	
+@route(PREFIX + '/bestworst', offset = int)
 def BestWorst(title, offset = 0):
-    oc = ObjectContainer(title2=title)
 
-    counter = 0
-	
-    for video in HTML.ElementFromURL(BOW).xpath('//*[@id="post-main-3857"]/div/p/a/@href'):
-       	counter = counter + 1
-        if counter <= offset:
-	        continue		
-	Log(video)
-       	url = video
-       	thumb = video #.xpath('./@src')[0]
-       	Log('URL is %s' %url)
-       	Log(thumb)
+	oc = ObjectContainer(title2=title)
 
-       	oc.add(VideoClipObject(
-            url = url,
-            thumb = thumb))
-				
-	if len(oc) >= MAX_EPISODES_PER_PAGE:
-            oc.add(NextPageObject(key = Callback(AllShows, title = 'Best of the Worst', offset = counter), title = 'Next')) 
-            return oc
+	counter = 0
+	thumblist = HTML.ElementFromURL(BOW).xpath('//*[@class="post clearfix"]/div/p/a/img/@src')
+	nextthumb = 0
 
-    return oc
-
-###################################################################################################
+	# Get list of videos.
+	for link in HTML.ElementFromURL(BOW).xpath('//*[@class="post clearfix"]/div/p/a/@href'):
+		counter = counter + 1
+		if counter <= offset:
+			continue
+		Log('Link is %s' %link)
+        	thumb = thumblist[nextthumb]
+        	nextthumb = nextthumb + 1
+        	Log('Thumbnail is %s' %thumb)
+        	# Some links need the base URL added.
+        	if link[0:4] != 'http':
+            		link = BOW + link
+            	Log('Full link is %s' %link)
+        	try:
+            		url = HTML.ElementFromURL(link).xpath('//embed')[0].get('src')
+            		if url.startswith('http://a.'):
+                		url = 'http://blip.tv/play/%s.html' % (url[25:36])
+		except IndexError:
+                	Log('End of list.')
+         	Log('Video is %s' %url)
+         	oc.add(VideoClipObject(url = url, thumb = thumb, title = title))
+	 	if len(oc) >= MAX_EPISODES_PER_PAGE:
+             		oc.add(NextPageObject(key = Callback(BestWorst, title = 'Best of the Worst', offset = counter), title = 'Next'))
+             		return oc
+	return oc
+############################################################################
 @route('/video/redlettermedia/allshows', offset = int)
 def AllShows(title, offset = 0):
     oc = ObjectContainer(title2 = title)
