@@ -155,7 +155,7 @@ def OtherMovies(title):
     return oc
 ###################################################################################################
 @route(PREFIX + '/fourteen', offset = int)
-def Thirteen(title, offset = 0):
+def Fourteen(title, offset = 0):
     oc = ObjectContainer(title2=title)
 
     counter = 0
