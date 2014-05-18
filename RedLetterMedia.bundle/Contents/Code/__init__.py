@@ -6,11 +6,12 @@ NS = {'blip':'http://blip.tv/dtd/blip/1.0',
             'media':'http://search.yahoo.com/mrss/'}
 
 RSS_FEED = 'http://redlettermedia.blip.tv/rss'
-PLINKETT = 'http://www.redlettermedia.com/plinkett/'
+PLINKETT = BASEURL + '/plinkett/'
 PLINKETTCATS = 'star-trek', 'star-wars', 'other-movies', 'commentary-tracks', 'plinkett-review-trailers', 'plinkett-review-extras', 'mr-plinkett-the-animated-series'
-BOTW = 'http://redlettermedia.com/best-of-the-worst/'
-HITB = 'http://redlettermedia.com/half-in-the-bag/'
-HITBMORE = '2011-episodes', '2012-episodes', '2013-episodes', '2014-episodes'
+BOTW = BASEURL + '/best-of-the-worst/'
+HITB = BASEURL + '/half-in-the-bag/'
+BASEURL = 'http://redlettermedia.com'
+#HITBMORE = '2011-episodes', '2012-episodes', '2013-episodes', '2014-episodes'
 MAX_EPISODES_PER_PAGE = 10
 
 ###################################################################################################
@@ -47,28 +48,12 @@ def PlinkMenu(title):
 @route(PREFIX + '/hitb/hitbmenu')
 def HITBMenu(title):
     oc = ObjectContainer(title2=title)
-    oc.add(DirectoryObject(key=Callback(Fourteen, title='2014 Episodes'), title='2014 Episodes', thumb = R(ICON)))
-    oc.add(DirectoryObject(key=Callback(Thirteen, title='2013 Episodes'), title='2013 Episodes', thumb = R(ICON)))
-    oc.add(DirectoryObject(key=Callback(Twelve, title='2012 Episodes'), title='2012 Episodes', thumb = R(ICON)))
-    oc.add(DirectoryObject(key=Callback(Eleven, title='2011 Episodes'), title='2011 Episodes', thumb = R(ICON)))
+    # Dynamically generate the menu based on the site drop downs.
+    dropdown = HTML.ElementFromURL(BASEURL).xpath('//*[@id="menu-item-527"]/ul/li/a/@href')
+    for ent in dropdown:
+        # Must remove the hyphens in the function names.
+        oc.add(DirectoryObject(key=Callback(ent[47:].strip('/"').replace('-',''), title=ent[47:].strip('/"')), title=ent[47:].strip('/"'), thumb = R(ICON)))
     return oc
-
-###################################################################################################
-##@route(PREFIX + '/plinkett')
-##def Plinkett(title):
-##	oc = ObjectContainer(title=title2)
-##	for category in PLINKETTCATS:
-##		link = PLINKETT + category
-##		for vidlink in HTML.ElementFromURL(link).xpath('//*[@class="post clearfix"]/div/p/a'):
-##			if vidlink[0:4] != 'http':
-##				vidlink = PLINKETT + vidlink
-##			Log('Video URL is %s' %vidlink)
-##			url = HTML.ElementFromURL(link).xpath('//embed')
-##			Log('Video is %s' %video)
-##			thumb = HTML.ElementFromURL(link).xpath('//*[@class="post clearfix"]/div/p/a/img')[0]
-##			Log('Thumbnail is %s' %thumb)
-##			oc.add(VideoClipObject(url = url, thumb = thumb))
-##	return oc
 ###################################################################################################
 # Star Trek Section of Plinkett reviews.
 @route(PREFIX + '/startrek')
@@ -155,7 +140,8 @@ def OtherMovies(title):
     return oc
 ###################################################################################################
 @route(PREFIX + '/fourteen', offset = int)
-def Fourteen(title, offset = 0):
+#cant hyphenate
+def 2014episodes(title, offset = 0):
     oc = ObjectContainer(title2=title)
 
     counter = 0
@@ -190,9 +176,10 @@ def Fourteen(title, offset = 0):
             ObjectContainer(header="Error", message="This section does not contain any video")
             return oc
     return oc
-###################################################################################################
+
+####################################################################################################
 @route(PREFIX + '/thirteen', offset = int)
-def Thirteen(title, offset = 0):
+def 2013episodes(title, offset = 0):
     oc = ObjectContainer(title2=title)
 
     counter = 0
@@ -229,7 +216,7 @@ def Thirteen(title, offset = 0):
     return oc
 ###################################################################################################
 @route(PREFIX + '/twelve', offset = int)
-def Twelve(title, offset = 0):
+def 2012episodes(title, offset = 0):
     oc = ObjectContainer(title2=title)
 
     counter = 0
@@ -266,7 +253,7 @@ def Twelve(title, offset = 0):
     return oc
 ###################################################################################################
 @route(PREFIX + '/eleven', offset = int)
-def Eleven(title, offset = 0):
+def 2011episodes(title, offset = 0):
     oc = ObjectContainer(title2=title)
 
     counter = 0
