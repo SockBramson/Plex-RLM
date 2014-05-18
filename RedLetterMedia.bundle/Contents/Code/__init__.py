@@ -170,7 +170,7 @@ def 2014episodes(title, offset = 0):
         Log('Video is %s' %url)
         oc.add(VideoClipObject(url = url, thumb = thumb, title = title))
         if len(oc) >= MAX_EPISODES_PER_PAGE:
-            oc.add(NextPageObject(key = Callback(Fourteen, title = '2014 Episodes', offset = counter), title = 'Next'))
+            oc.add(NextPageObject(key = Callback(2014episodes, title = '2014-episodes', offset = counter), title = 'Next'))
             return oc
         elif len(oc) == 0:
             ObjectContainer(header="Error", message="This section does not contain any video")
@@ -208,7 +208,7 @@ def 2013episodes(title, offset = 0):
         Log('Video is %s' %url)
         oc.add(VideoClipObject(url = url, thumb = thumb, title = title))
         if len(oc) >= MAX_EPISODES_PER_PAGE:
-            oc.add(NextPageObject(key = Callback(Thirteen, title = '2013 Episodes', offset = counter), title = 'Next'))
+            oc.add(NextPageObject(key = Callback(2013episodes, title = '2013-episodes', offset = counter), title = 'Next'))
             return oc
         elif len(oc) == 0:
             ObjectContainer(header="Error", message="This section does not contain any video")
@@ -245,7 +245,7 @@ def 2012episodes(title, offset = 0):
         Log('Video is %s' %url)
         oc.add(VideoClipObject(url = url, thumb = thumb, title = title))
         if len(oc) >= MAX_EPISODES_PER_PAGE:
-            oc.add(NextPageObject(key = Callback(Twelve, title = '2012 Episodes', offset = counter), title = 'Next'))
+            oc.add(NextPageObject(key = Callback(2012episodes, title = '2012-episodes', offset = counter), title = 'Next'))
             return oc
         elif len(oc) == 0:
             ObjectContainer(header="Error", message="This section does not contain any video")
@@ -282,7 +282,7 @@ def 2011episodes(title, offset = 0):
             Log('Video is %s' %url)
             oc.add(VideoClipObject(url = url, thumb = thumb, title = title))
             if len(oc) >= MAX_EPISODES_PER_PAGE:
-                oc.add(NextPageObject(key = Callback(Eleven, title = '2011 Episodes', offset = counter), title = 'Next'))
+                oc.add(NextPageObject(key = Callback(2011episodes, title = '2011-episodes', offset = counter), title = 'Next'))
                 return oc
             elif len(oc) == 0:
                 ObjectContainer(header="Error", message="This section does not contain any video")
