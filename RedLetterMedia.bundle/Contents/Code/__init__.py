@@ -54,22 +54,6 @@ def HITBMenu(title):
     return oc
 
 ###################################################################################################
-##@route(PREFIX + '/plinkett')
-##def Plinkett(title):
-##	oc = ObjectContainer(title=title2)
-##	for category in PLINKETTCATS:
-##		link = PLINKETT + category
-##		for vidlink in HTML.ElementFromURL(link).xpath('//*[@class="post clearfix"]/div/p/a'):
-##			if vidlink[0:4] != 'http':
-##				vidlink = PLINKETT + vidlink
-##			Log('Video URL is %s' %vidlink)
-##			url = HTML.ElementFromURL(link).xpath('//embed')
-##			Log('Video is %s' %video)
-##			thumb = HTML.ElementFromURL(link).xpath('//*[@class="post clearfix"]/div/p/a/img')[0]
-##			Log('Thumbnail is %s' %thumb)
-##			oc.add(VideoClipObject(url = url, thumb = thumb))
-##	return oc
-###################################################################################################
 # Star Trek Section of Plinkett reviews.
 @route(PREFIX + '/startrek')
 def StarTrek(title):
@@ -168,9 +152,12 @@ def Fourteen(title, offset = 0):
         if counter <= offset:
             continue
         Log('Link is %s' %link)
-        thumb = thumblist[nextthumb]
-        nextthumb = nextthumb + 1
-        Log('Thumbnail is %s' %thumb)
+        try:
+            thumb = thumblist[nextthumb]
+            nextthumb = nextthumb + 1
+            Log('Thumbnail is %s' %thumb)
+        except IndexError:
+            Log('No more thumbnails.')
         # Some links need the base URL added.
         if link[0:4] != 'http':
             link = HITB + link
