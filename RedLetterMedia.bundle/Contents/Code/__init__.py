@@ -144,7 +144,7 @@ def Fourteen(title, offset = 0):
 
     counter = 0
     thumblist = HTML.ElementFromURL(HITB + '2014-episodes').xpath('//*[@class="post clearfix"]/div/p/a/img/@src')
-    nextthumb = 0
+    nextthumb = -1 
 
     # Get list of videos.
     for link in HTML.ElementFromURL(HITB + '2014-episodes').xpath('//*[@class="post clearfix"]/div/p/a/@href'):
